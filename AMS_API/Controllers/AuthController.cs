@@ -34,7 +34,18 @@ namespace AMS_API.Controllers
             {
                 return StatusCode(500, new { message = "Login Failed, Please Try Again!" });
             }
-            return Ok(new { message = "Login Successful", token });
+            return Ok(new
+            {
+                message = "Login Successful",
+                token,
+                user = new
+                {
+                    id = userFound.UserId,
+                    name = userFound.Name,
+                    role = userFound.Role.RoleName,
+                    email = userFound.Email
+                }
+            });
         }
 
         [HttpPost("forgot-password")]
