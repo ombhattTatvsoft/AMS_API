@@ -39,7 +39,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddAuthentication("Bearer")
-   .AddJwtBearer("Bearer",options =>
+   .AddJwtBearer("Bearer", options =>
    {
        options.RequireHttpsMetadata = false;
        options.SaveToken = true;
@@ -79,9 +79,12 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("amsfrontend", builder =>
+    {
         builder.WithOrigins("http://localhost:5173")
+                .AllowCredentials()
                .AllowAnyMethod()
-               .AllowAnyHeader());
+               .AllowAnyHeader();
+    });
 });
 
 builder.Services.AddControllers();

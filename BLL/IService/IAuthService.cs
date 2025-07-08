@@ -7,7 +7,7 @@ namespace BLL.IService
     public interface IAuthService
     {
         Task<User?> AuthenticateUserAsync(string email, string password);
-        string? CreateJwtToken(User user);
+        string? CreateJwtToken(User user,bool rememberMe);
         string? PrepareLink(User userFound, HttpContext httpContext, bool? firstLogin = false);
         Response SendEmail(string email, string body, string subject);
         Task<Response> CheckResetLinkAsync(string id);

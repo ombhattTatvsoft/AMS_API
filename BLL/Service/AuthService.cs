@@ -48,7 +48,7 @@ public class AuthService : IAuthService
         }
     }
 
-    public string? CreateJwtToken(User user)
+    public string? CreateJwtToken(User user,bool rememberMe)
     {
         try
         {
@@ -65,7 +65,7 @@ public class AuthService : IAuthService
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(1),
+                expires: DateTime.UtcNow.AddDays(rememberMe ? 30 : 1),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -82,7 +82,7 @@ public class AuthService : IAuthService
         try
         {
             string resetCode = Guid.NewGuid().ToString();
-            string verifyUrl = "/Auth/resetpassword/" + resetCode;
+            string verifyUrl = "/reset-password/" + resetCode;
             string link = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{verifyUrl}";
             userFound.ResetPasswordCode = resetCode;
             if (firstLogin == true)

@@ -29,7 +29,7 @@ namespace AMS_API.Controllers
             {
                 return Unauthorized(new { message = "Login Failed, Check Credentials!" });
             }
-            string? token = _service.CreateJwtToken(userFound);
+            string? token = _service.CreateJwtToken(userFound,user.Rememberme);
             if (token == null)
             {
                 return StatusCode(500, new { message = "Login Failed, Please Try Again!" });
@@ -70,7 +70,7 @@ namespace AMS_API.Controllers
             }
         }
 
-        [HttpGet("reset-password")]
+        [HttpGet("reset-password/{id}")]
         public async Task<IActionResult> ResetPassword(string id)
         {
             if (string.IsNullOrEmpty(id))
