@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using AutoMapper;
+using BLL.Constants;
 using BLL.Helpers;
 using BLL.IService;
 using DAL.IRepository;
@@ -59,7 +60,7 @@ public class UserService : IUserService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error finding user by email: {Email}", email);
+            _logger.LogError(e, Constant.USER_BY_EMAIL_FAIL, email);
             return null;
         }
     }

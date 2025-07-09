@@ -4,6 +4,7 @@ using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using BLL.Constants;
 using BLL.IService;
 using DAL.IRepository;
 using Entity.DTOs;
@@ -43,12 +44,12 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error authenticating user with email: {Email}", email);
+            _logger.LogError(ex, Constant.AUTH_USER_FAIL, email);
             return null;
         }
     }
 
-    public string? CreateJwtToken(User user,bool rememberMe)
+    public string? CreateJwtToken(User user, bool rememberMe)
     {
         try
         {
@@ -72,7 +73,7 @@ public class AuthService : IAuthService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error creating JWT token for user: {UserId}", user.UserId);
+            _logger.LogError(e, Constant.TOKEN_CREATE_FAIL, user.UserId);
             return null;
         }
     }
@@ -82,8 +83,8 @@ public class AuthService : IAuthService
         try
         {
             string resetCode = Guid.NewGuid().ToString();
-            string verifyUrl = "/reset-password/" + resetCode;
-            string link = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{verifyUrl}";
+            string verifyUrl = "auth/reset-password/" + resetCode;
+            string link = $"http://localhost:5173/{verifyUrl}";
             userFound.ResetPasswordCode = resetCode;
             if (firstLogin == true)
                 userFound.FirstLogin = true;
@@ -95,7 +96,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Email reset link preparation failed");
+            _logger.LogError(ex, Constant.EMAIL_LINK_FAIL);
             return null;
         }
     }
@@ -118,12 +119,12 @@ public class AuthService : IAuthService
             smtp.Credentials = NetworkCred;
             smtp.Port = 587;
             smtp.Send(mm);
-            return new Response(true, "Email sent successfully");
+            return new Response(true, Constant.EMAIL_SUCCESS);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Email sent failed for {Subject}", subject);
-            return new Response(false, "Email sent failed");
+            _logger.LogError(ex, Constant.EMAIL_CATCH_FAIL, subject);
+            return new Response(false, Constant.EMAIL_FAIL);
         }
     }
 
@@ -133,7 +134,7 @@ public class AuthService : IAuthService
         {
             User? user = await _userRepository.GetAsync(x => x.ResetPasswordCode == id && !x.IsDeleted);
             if (user == null)
-                return new Response(false, "Invalid Link");
+                return new Response(false, Constant.INVALID_RESET_LINK);
             else
             {
                 if (!user.FirstLogin && (user.ResetPasswordCodeExpiryTime == null || DateTime.Now > user.ResetPasswordCodeExpiryTime))
@@ -141,7 +142,7 @@ public class AuthService : IAuthService
                     user.ResetPasswordCode = null;
                     user.ResetPasswordCodeExpiryTime = null;
                     _userRepository.Update(user);
-                    return new Response(false, "Reset Link Expired.");
+                    return new Response(false, Constant.EXPIRED_RESET_LINK);
                 }
                 return new Response(true);
             }

@@ -9,7 +9,7 @@ public class Response
     public string? Message { get; set; }
     public object? Data { get; set; }
 
-    public Response(bool isSuccess, string? message=null, object? data=null)
+    public Response(bool isSuccess, string? message = null, object? data = null)
     {
         // StatusCode = statusCode;
         IsSuccess = isSuccess;

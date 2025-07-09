@@ -1,3 +1,4 @@
+using BLL.Constants;
 using BLL.Helpers;
 using BLL.IService;
 using Entity.DTOs;
@@ -25,18 +26,22 @@ namespace AMS_API.Controllers
         public async Task<IActionResult> Login(UserLoginDTO user)
         {
             User? userFound = await _service.AuthenticateUserAsync(user.Email.Trim(), user.Password);
+            Response response = new(false);
             if (userFound == null)
             {
-                return Unauthorized(new { message = "Login Failed, Check Credentials!" });
+                response.Message = Constant.WRONG_CRED;
+                return Unauthorized(response);
             }
             string? token = _service.CreateJwtToken(userFound,user.Rememberme);
             if (token == null)
             {
-                return StatusCode(500, new { message = "Login Failed, Please Try Again!" });
+                response.Message = Constant.LOGIN_FAIL;
+                return StatusCode(500, response);
             }
-            return Ok(new
+            response.IsSuccess = true;
+            response.Message = Constant.LOGIN_SUCCESS;
+            response.Data = new
             {
-                message = "Login Successful",
                 token,
                 user = new
                 {
@@ -45,56 +50,65 @@ namespace AMS_API.Controllers
                     role = userFound.Role.RoleName,
                     email = userFound.Email
                 }
-            });
+            };
+            return Ok(response);
         }
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordDTO user)
         {
             User? userFound = await _userService.FindUserByEmailAsync(user.Email.Trim());
+            Response response = new(false);
             if (userFound != null)
             {
                 string? link = _service.PrepareLink(userFound, HttpContext);
                 string subject = EmailBodyHelper.ForgotPasswordSubject;
                 string body = EmailBodyHelper.ForgotPasswordBody(link!);
 
-                Response response = _service.SendEmail(userFound.Email, body, subject);
+                response = _service.SendEmail(userFound.Email, body, subject);
                 if (response.IsSuccess)
-                    return Ok(new { message = response.Message });
+                    return Ok(response);
                 else
-                    return StatusCode(500, new { message = response.Message });
+                    return StatusCode(500, response);
             }
             else
             {
-                return NotFound(new { message = "User Not Found." });
+                response.Message = Constant.USER_NOT_FOUND;
+                return NotFound(response);
             }
         }
 
         [HttpGet("reset-password/{id}")]
         public async Task<IActionResult> ResetPassword(string id)
         {
+            Response response = new(false);
             if (string.IsNullOrEmpty(id))
-                return BadRequest(new { message = "Invalid reset code." });
-
-            Response response = await _service.CheckResetLinkAsync(id);
+            {
+                response.Message = Constant.INVALID_RESET_LINK;
+                return BadRequest(response);
+            }
+            response = await _service.CheckResetLinkAsync(id);
             if (!response.IsSuccess)
             {
-                return BadRequest(new { message = response.Message });
+                return BadRequest(response);
             }
-            return Ok(new ResetPasswordDTO { ResetCode = id });
+            return Ok(response);
         }
 
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDTO user)
         {
-
             User? userFound = await _service.FindUserByResetCodeAsync(user.ResetCode);
+            Response response = new(true);
             if (userFound != null)
             {
                 await _userService.UpdatePasswordAsync(userFound, user.NewPassword);
-                return Ok(new { message = "Reset Password Successful" });
+                response.Message = "Reset Password Successful";
+                return Ok(response);
             }
-            return NotFound(new { message = "User not found or invalid reset code" });
+            response.IsSuccess = false;
+            response.Message = Constant.INVALID_RESET_LINK;
+            return NotFound(response);
         }
     }
 }
