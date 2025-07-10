@@ -4,6 +4,7 @@ using BLL.IService;
 using Entity.DTOs;
 using Entity.Models;
 using Entity.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AMS_API.Controllers
@@ -30,7 +31,7 @@ namespace AMS_API.Controllers
             if (userFound == null)
             {
                 response.Message = Constant.WRONG_CRED;
-                return Unauthorized(response);
+                return NotFound(response);
             }
             string? token = _service.CreateJwtToken(userFound,user.Rememberme);
             if (token == null)

@@ -54,25 +54,6 @@ builder.Services.AddAuthentication("Bearer")
            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
            ClockSkew = TimeSpan.Zero
        };
-       options.Events = new JwtBearerEvents
-       {
-           OnChallenge = context =>
-           {
-               if (!context.Handled)
-               {
-                   context.HandleResponse();
-                   context.Response.Cookies.Delete("JwtAMSToken");
-               }
-               return Task.CompletedTask;
-           },
-           OnMessageReceived = context =>
-           {
-               context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
-               context.Response.Headers["Pragma"] = "no-cache";
-               context.Response.Headers["Expires"] = "-1";
-               return Task.CompletedTask;
-           }
-       };
    });
 builder.Services.AddAuthorization();
 
@@ -123,10 +104,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("amsfrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseCors("amsfrontend");
 app.MapControllers();
 
 app.Run();
