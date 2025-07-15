@@ -1,3 +1,4 @@
+using System.Net;
 using BLL.Constants;
 using BLL.Helpers;
 using BLL.IService;
@@ -31,12 +32,14 @@ namespace AMS_API.Controllers
             if (userFound == null)
             {
                 response.Message = Constant.WRONG_CRED;
+                response.StatusCode = HttpStatusCode.NotFound;
                 return NotFound(response);
             }
             string? token = _service.CreateJwtToken(userFound,user.Rememberme);
             if (token == null)
             {
                 response.Message = Constant.LOGIN_FAIL;
+                response.StatusCode = HttpStatusCode.InternalServerError;
                 return StatusCode(500, response);
             }
             response.IsSuccess = true;
@@ -52,6 +55,7 @@ namespace AMS_API.Controllers
                     email = userFound.Email
                 }
             };
+            response.StatusCode = HttpStatusCode.OK;
             return Ok(response);
         }
 
@@ -75,6 +79,7 @@ namespace AMS_API.Controllers
             else
             {
                 response.Message = Constant.USER_NOT_FOUND;
+                response.StatusCode = HttpStatusCode.NotFound;
                 return NotFound(response);
             }
         }
@@ -82,17 +87,14 @@ namespace AMS_API.Controllers
         [HttpGet("reset-password/{id}")]
         public async Task<IActionResult> ResetPassword(string id)
         {
-            Response response = new(false);
-            if (string.IsNullOrEmpty(id))
-            {
-                response.Message = Constant.INVALID_RESET_LINK;
-                return BadRequest(response);
-            }
-            response = await _service.CheckResetLinkAsync(id);
+            Response response = await _service.CheckResetLinkAsync(id);
             if (!response.IsSuccess)
             {
+                response.Message = Constant.INVALID_RESET_LINK;
+                response.StatusCode = HttpStatusCode.BadRequest;
                 return BadRequest(response);
             }
+            response.StatusCode = HttpStatusCode.OK;
             return Ok(response);
         }
 
@@ -105,11 +107,13 @@ namespace AMS_API.Controllers
             {
                 await _userService.UpdatePasswordAsync(userFound, user.NewPassword);
                 response.Message = "Reset Password Successful";
+                response.StatusCode = HttpStatusCode.OK;
                 return Ok(response);
             }
             response.IsSuccess = false;
             response.Message = Constant.INVALID_RESET_LINK;
-            return NotFound(response);
+            response.StatusCode = HttpStatusCode.BadRequest;
+            return BadRequest(response);
         }
     }
 }
