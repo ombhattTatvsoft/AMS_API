@@ -64,8 +64,11 @@ public class DepartmentService : IDepartmentService
     {
         try
         {
+            Department? departmentWithSameName = await _repository.GetAsync(x => x.DepartmentName == model.DepartmentName);
             if (model.DepartmentId == 0)
             {
+                if (departmentWithSameName != null)
+                    return Response.Failed("Department with same name exists",HttpStatusCode.BadRequest);
                 Department department = _mapper.Map<Department>(model);
                 department.CreatedBy = UpsertedBy;
                 department.UpdatedBy = UpsertedBy;
@@ -78,6 +81,8 @@ public class DepartmentService : IDepartmentService
                 {
                     return Response.Failed("Department not found.", HttpStatusCode.NotFound);
                 }
+                if(departmentWithSameName!=null && departmentWithSameName.DepartmentId!=existingDepartment.DepartmentId)
+                    return Response.Failed("Department with same name exists",HttpStatusCode.BadRequest);
                 Department department = _mapper.Map(model, existingDepartment);
                 department.UpdatedAt = DateTime.Now;
                 department.UpdatedBy = UpsertedBy;
