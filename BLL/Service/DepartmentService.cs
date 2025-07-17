@@ -28,8 +28,7 @@ public class DepartmentService : IDepartmentService
         _httpContextAccessor = httpContextAccessor;
         _mapper = mapper;
         _logger = logger;
-        // UpsertedBy = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        UpsertedBy = 1;
+        UpsertedBy = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     }
 
     public async Task<Response> GetAllDepartmentsAsync()

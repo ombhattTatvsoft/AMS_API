@@ -1,7 +1,6 @@
 using BLL.Helpers;
 using BLL.IService;
 using Entity.DTOs;
-using Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +23,7 @@ public class DepartmentController : ControllerBase
     public async Task<IActionResult> GetDepartments()
     {
         Response response = await _service.GetAllDepartmentsAsync();
-        return Ok(response);
+        return actionMapper.MapToActionResult(response);
     }
 
     [HttpGet("get-department/{id}")]

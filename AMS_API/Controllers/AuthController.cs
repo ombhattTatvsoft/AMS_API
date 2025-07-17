@@ -5,7 +5,6 @@ using BLL.IService;
 using Entity.DTOs;
 using Entity.Models;
 using Entity.ViewModels;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AMS_API.Controllers
