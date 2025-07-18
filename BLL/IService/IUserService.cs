@@ -7,8 +7,9 @@ namespace BLL.IService
     public interface IUserService
     {
         Task<Response> GetAllUsersAsync();
-        // Task<UpsertUserDTO> GetUserAsync(int id);
-        // Task<Response> SaveUserAsync(UpsertUserDTO model);
+        Task<Response> GetAllRolesAsync();
+        Task<Response> GetUserAsync(int id);
+        Task<Response> SaveUserAsync(UserDTO model);
         // Task<List<User>> GetManagersByDepartmentAndRole(int departmentId, int roleId);
         // Task<Response> DeleteUserAsync(int id);
         // Task<User?> GetCurrentUserAsync();

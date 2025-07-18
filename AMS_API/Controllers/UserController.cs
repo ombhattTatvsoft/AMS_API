@@ -28,4 +28,29 @@ public class UserController : ControllerBase
         Response response = await _service.GetAllUsersAsync();
         return actionMapper.MapToActionResult(response);
     }
+
+    [HttpGet("get-user/{id}")]
+    public async Task<IActionResult> GetUserById(int id)
+    {
+        Response response = await _service.GetUserAsync(id);
+        return actionMapper.MapToActionResult(response);
+    }
+
+    [HttpPost("save-user")]
+    public async Task<IActionResult> SaveUser(UserDTO model)
+    {
+        if (model.RoleId == 2)
+        {
+            ModelState.Remove("ManagerId");
+        }
+        Response response = await _service.SaveUserAsync(model);
+        return actionMapper.MapToActionResult(response);
+    }
+
+    [HttpGet("get-roles")]
+    public async Task<IActionResult> GetRoles()
+    {
+        Response response = await _service.GetAllRolesAsync();
+        return actionMapper.MapToActionResult(response);
+    }
 }

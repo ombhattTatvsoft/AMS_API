@@ -17,11 +17,12 @@ public class MappingProfile : Profile
         .ForMember(dest => dest.ManagerName, opt => opt.MapFrom(src => src.Manager.Name ?? ""))
         .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department.DepartmentName ?? ""));
         CreateMap<Department, DepartmentDTO>()
-        .ForMember(dest=>dest.UserCount,opt=>opt.MapFrom(src=>src.Users.Count));
-        
+        .ForMember(dest => dest.UserCount, opt => opt.MapFrom(src => src.Users.Count));
+
         // CreateMap<HolidayVM, Holiday>().ReverseMap();
         // CreateMap<UserAttendanceVM, Attendance>().ReverseMap();
         CreateMap<UpsertDepartmentDTO, Department>().ReverseMap();
+        CreateMap<RoleDTO, Role>().ReverseMap();
         // CreateMap<LeaveVM, Leave>().ReverseMap();
     }
 }

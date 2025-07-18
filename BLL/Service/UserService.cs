@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Claims;
 using AutoMapper;
 using BLL.Constants;
@@ -15,6 +16,7 @@ namespace BLL.Service;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IRoleRepository _roleRepository;
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -22,9 +24,10 @@ public class UserService : IUserService
 
     private readonly IMapper _mapper;
 
-    public UserService(IUserRepository userRepository, IHttpContextAccessor httpContextAccessor, IMapper mapper, ILogger<UserService> logger)
+    public UserService(IUserRepository userRepository, IRoleRepository roleRepository, IHttpContextAccessor httpContextAccessor, IMapper mapper, ILogger<UserService> logger)
     {
         _userRepository = userRepository;
+        _roleRepository = roleRepository;
         _httpContextAccessor = httpContextAccessor;
         _mapper = mapper;
         _logger = logger;
@@ -35,7 +38,7 @@ public class UserService : IUserService
         try
         {
             List<User> users = await _userRepository.GetAllAsync(x => !x.IsDeleted, x => x.Role, x => x.Manager, x => x.Department);
-            return Response.Success(data:_mapper.Map<List<UserDTO>>(users));
+            return Response.Success(data: _mapper.Map<List<UserDTO>>(users));
         }
         catch (Exception ex)
         {
@@ -79,54 +82,69 @@ public class UserService : IUserService
         }
     }
 
-    // public async Task<Response> SaveUserAsync(UpsertUserDTO model)
-    // {
-    //     try
-    //     {
-    //         int upsertedBy = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-    //         User? userWithEmail = await FindUserByEmailAsync(model.Email);
-    //         User? user = (model.UserId == 0) ? new User() : await _userRepository.GetAsync(u => u.UserId == model.UserId && !u.IsDeleted);
-    //         if (userWithEmail != null && (model.UserId == 0 || (model.UserId != 0 && userWithEmail.UserId != model.UserId)))
-    //             return new Response(false, "Email already exists");
-    //         if (model.UserId != 0 && user == null)
-    //             return new Response(false, "User not found");
-    //         // if (model.UserId == 0)
-    //         // {
-    //         //     user = _mapper.Map<User>(model);
-    //         //     user.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(Guid.NewGuid().ToString(), 13);
-    //         //     user.CreatedBy = upsertedBy;
-    //         //     user.UpdatedBy = upsertedBy;
-    //         //     await _userRepository.AddAsync(user);
-    //         // }
-    //         // else
-    //         // {
-    //         //     user = _mapper.Map(model, user);
-    //         //     user.UpdatedAt = DateTime.Now;
-    //         //     user.UpdatedBy = upsertedBy;
-    //         //     _userRepository.Update(user);
-    //         // }
-    //         user = model.UserId == 0 ? _mapper.Map<User>(model) : _mapper.Map(model, user);
-    //         user!.UpdatedBy = upsertedBy;
-    //         if (model.UserId == 0)
-    //         {
-    //             user.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(Guid.NewGuid().ToString(), 13);
-    //             user.CreatedBy = upsertedBy;
-    //             await _userRepository.AddAsync(user);
-    //         }
-    //         else
-    //         {
-    //             user.UpdatedAt = DateTime.Now;
-    //             _userRepository.Update(user);
-    //         }
-    //         await _userRepository.SaveAsync();
-    //         return new Response(true, string.Format("User {0} successfully", model.UserId == 0 ? "created" : "updated"), user);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error saving user with email {Email}", model.Email);
-    //         return new Response(false, "An error occurred while saving the user");
-    //     }
-    // }
+    public async Task<Response> GetAllRolesAsync()
+    {
+        try
+        {
+            List<Role> roles = await _roleRepository.GetAllAsync();
+            return Response.Success(data: _mapper.Map<List<RoleDTO>>(roles));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all roles");
+            return Response.Failed();
+        }
+    }
+
+    public async Task<Response> GetUserAsync(int id)
+    {
+        try
+        {
+            User? user = await _userRepository.GetAsync(x => !x.IsDeleted, x => x.Role, x => x.Manager, x => x.Department);
+            return user == null ? Response.Failed(statusCode: HttpStatusCode.NotFound) : Response.Success(data: _mapper.Map<UserDTO>(user));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user with ID {UserId}", id);
+            return Response.Failed();
+        }
+    }
+
+    public async Task<Response> SaveUserAsync(UserDTO model)
+    {
+        try
+        {
+            int upsertedBy = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            User? userWithEmail = await FindUserByEmailAsync(model.Email);
+            User? user = (model.UserId == 0) ? new User() : await _userRepository.GetAsync(u => u.UserId == model.UserId && !u.IsDeleted);
+            if (userWithEmail != null && (model.UserId == 0 || (model.UserId != 0 && userWithEmail.UserId != model.UserId)))
+                return Response.Failed("Email already exists", HttpStatusCode.BadRequest);
+            if (model.UserId != 0 && user == null)
+                return Response.Failed("User not found", HttpStatusCode.NotFound);
+            user = model.UserId == 0 ? _mapper.Map<User>(model) : _mapper.Map(model, user);
+            user!.UpdatedBy = upsertedBy;
+            if (model.UserId == 0)
+            {
+                user.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(Guid.NewGuid().ToString(), 13);
+                user.CreatedBy = upsertedBy;
+                await _userRepository.AddAsync(user);
+            }
+            else
+            {
+                user.UpdatedAt = DateTime.Now;
+                _userRepository.Update(user);
+            }
+            await _userRepository.SaveAsync();
+            if (model.DepartmentId == 0)
+                return Response.Success("User created successfully", HttpStatusCode.Created, _mapper.Map<UserDTO>(user));
+            return Response.Success("User updated successfully.", HttpStatusCode.OK);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving user with email {Email}", model.Email);
+            return Response.Failed();
+        }
+    }
 
     // public async Task<List<User>> GetManagersByDepartmentAndRole(int departmentId, int roleId)
     // {
@@ -138,20 +156,6 @@ public class UserService : IUserService
     //     {
     //         _logger.LogError(ex, "Error retrieving managers for department {DepartmentId}", departmentId);
     //         return new List<User>();
-    //     }
-    // }
-
-    // public async Task<UpsertUserDTO> GetUserAsync(int id)
-    // {
-    //     try
-    //     {
-    //         User? user = await _userRepository.GetAsync(x => x.UserId == id && !x.IsDeleted) ?? throw new Exception("User not found");
-    //         return _mapper.Map<UpsertUserDTO>(user);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error retrieving user with ID {UserId}", id);
-    //         return new UpsertUserDTO();
     //     }
     // }
 
