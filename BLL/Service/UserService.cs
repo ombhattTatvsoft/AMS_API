@@ -100,7 +100,7 @@ public class UserService : IUserService
     {
         try
         {
-            User? user = await _userRepository.GetAsync(x => !x.IsDeleted, x => x.Role, x => x.Manager, x => x.Department);
+            User? user = await _userRepository.GetAsync(x => !x.IsDeleted && x.UserId == id, x => x.Role, x => x.Manager, x => x.Department);
             return user == null ? Response.Failed(statusCode: HttpStatusCode.NotFound) : Response.Success(data: _mapper.Map<UserDTO>(user));
         }
         catch (Exception ex)
@@ -114,7 +114,7 @@ public class UserService : IUserService
     {
         try
         {
-            int upsertedBy = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            int upsertedBy = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? userWithEmail = await FindUserByEmailAsync(model.Email);
             User? user = (model.UserId == 0) ? new User() : await _userRepository.GetAsync(u => u.UserId == model.UserId && !u.IsDeleted);
             if (userWithEmail != null && (model.UserId == 0 || (model.UserId != 0 && userWithEmail.UserId != model.UserId)))
@@ -135,8 +135,8 @@ public class UserService : IUserService
                 _userRepository.Update(user);
             }
             await _userRepository.SaveAsync();
-            if (model.DepartmentId == 0)
-                return Response.Success("User created successfully", HttpStatusCode.Created, _mapper.Map<UserDTO>(user));
+            if (model.UserId == 0)
+                return Response.Success("User added successfully", HttpStatusCode.Created, user);
             return Response.Success("User updated successfully.", HttpStatusCode.OK);
         }
         catch (Exception ex)
@@ -146,56 +146,30 @@ public class UserService : IUserService
         }
     }
 
-    // public async Task<List<User>> GetManagersByDepartmentAndRole(int departmentId, int roleId)
-    // {
-    //     try
-    //     {
-    //         return await _userRepository.GetAllAsync(u => u.DepartmentId == departmentId && !u.IsDeleted && u.RoleId < roleId, u => u.Role);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error retrieving managers for department {DepartmentId}", departmentId);
-    //         return new List<User>();
-    //     }
-    // }
-
-    // public async Task<Response> DeleteUserAsync(int id)
-    // {
-    //     try
-    //     {
-    //         User? user = await _userRepository.GetAsync(x => x.UserId == id && !x.IsDeleted);
-    //         if (user == null)
-    //         {
-    //             return new Response(false, "User not found");
-    //         }
-    //         if (await _userRepository.GetAsync(x => x.ManagerId == user.UserId && !x.IsDeleted) != null)
-    //         {
-    //             return new Response(false, "Cannot delete user who is a manager of other users");
-    //         }
-    //         user.IsDeleted = true;
-    //         _userRepository.Update(user);
-    //         await _userRepository.SaveAsync();
-    //         return new Response(true, "User deleted successfully");
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error deleting user with ID {UserId}", id);
-    //         return new Response(false, "An error occurred while deleting the user");
-    //     }
-    // }
-
-    // public async Task<User?> GetCurrentUserAsync()
-    // {
-    //     try
-    //     {
-    //         return await _userRepository.GetAsync(x => x.UserId == int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!), x => x.InverseManager, x => x.Role);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "An error occurred while fetching the current user");
-    //         return null;
-    //     }
-    // }
+    public async Task<Response> DeleteUserAsync(int id)
+    {
+        try
+        {
+            User? user = await _userRepository.GetAsync(x => x.UserId == id && !x.IsDeleted);
+            if (user == null)
+            {
+                return Response.Failed("User not found", HttpStatusCode.NotFound);
+            }
+            if (await _userRepository.GetAsync(x => x.ManagerId == user.UserId && !x.IsDeleted) != null)
+            {
+                return Response.Failed("Cannot delete user who is a manager of other users", HttpStatusCode.BadRequest);
+            }
+            user.IsDeleted = true;
+            _userRepository.Update(user);
+            await _userRepository.SaveAsync();
+            return Response.Success("User deleted successfully", HttpStatusCode.OK);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting user with ID {UserId}", id);
+            return Response.Failed();
+        }
+    }
 
     // public async Task<List<User>> GetMyTeam(User user)
     // {
@@ -214,19 +188,6 @@ public class UserService : IUserService
     //     {
     //         _logger.LogError(ex, "Error retrieving team members for user {UserId}", user.UserId);
     //         return new List<User>();
-    //     }
-    // }
-
-    // public async Task<User?> GetUserById(int userId)
-    // {
-    //     try
-    //     {
-    //         return await _userRepository.GetAsync(x => x.UserId == userId && !x.IsDeleted, x => x.Role);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Error retrieving user {UserId}", userId);
-    //         return new User();
     //     }
     // }
 

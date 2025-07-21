@@ -16,6 +16,8 @@ public class MappingProfile : Profile
         .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role.RoleName))
         .ForMember(dest => dest.ManagerName, opt => opt.MapFrom(src => src.Manager.Name ?? ""))
         .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department.DepartmentName ?? ""));
+        CreateMap<UserDTO, User>()
+        .ForMember(dest => dest.ManagerId, opt => opt.MapFrom(src => src.ManagerId == 0 ? (int?)null : src.ManagerId));
         CreateMap<Department, DepartmentDTO>()
         .ForMember(dest => dest.UserCount, opt => opt.MapFrom(src => src.Users.Count));
 

@@ -119,12 +119,12 @@ public class AuthService : IAuthService
             smtp.Credentials = NetworkCred;
             smtp.Port = 587;
             smtp.Send(mm);
-            return new Response(true, Constant.EMAIL_SUCCESS,HttpStatusCode.OK);
+            return Response.Success(Constant.EMAIL_SUCCESS, HttpStatusCode.OK);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, Constant.EMAIL_CATCH_FAIL, subject);
-            return new Response(false, Constant.EMAIL_FAIL,HttpStatusCode.InternalServerError);
+            return Response.Failed(Constant.EMAIL_FAIL);
         }
     }
 

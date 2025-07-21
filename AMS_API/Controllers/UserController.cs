@@ -1,6 +1,7 @@
 using BLL.Helpers;
 using BLL.IService;
 using Entity.DTOs;
+using Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,17 +9,18 @@ namespace AMS_API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin")]
 
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
-
+    private readonly IAuthService _authService;
     private readonly ActionMapper actionMapper;
 
-    public UserController(IUserService service)
+    public UserController(IUserService service, IAuthService authService)
     {
         _service = service;
+        _authService = authService;
         actionMapper = new ActionMapper();
     }
 
@@ -44,6 +46,27 @@ public class UserController : ControllerBase
             ModelState.Remove("ManagerId");
         }
         Response response = await _service.SaveUserAsync(model);
+        if (response.IsSuccess && model.UserId == 0)
+        {
+            string? link = _authService.PrepareLink((User)response.Data!, HttpContext, true);
+            string subject = EmailBodyHelper.UpsertUserSubject;
+            string body = EmailBodyHelper.UpsertUserBody(link!);
+            Response emailResponse = _authService.SendEmail(model.Email, body, subject);
+            if (!emailResponse.IsSuccess)
+            {
+                emailResponse.Message = "User created but email sending failed.";
+                return actionMapper.MapToActionResult(emailResponse);
+            }
+            else
+                response.Message = "User created successfully and email sent.";
+        }
+        return actionMapper.MapToActionResult(response);
+    }
+
+    [HttpDelete("delete-user/{id}")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        Response response = await _service.DeleteUserAsync(id);
         return actionMapper.MapToActionResult(response);
     }
 
