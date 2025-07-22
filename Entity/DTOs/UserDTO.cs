@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Entity.Models;
 
 namespace Entity.DTOs;
 
@@ -22,11 +21,12 @@ public class UserDTO
 
     [Required(ErrorMessage = "Manager is Required")]
     public int ManagerId { get; set; }
-    
+
     public string? ManagerName { get; set; }
 
     public int DepartmentId { get; set; }
 
     public string? DepartmentName { get; set; }
 
+    public DateTime? CreatedAt { get; set; }
 }

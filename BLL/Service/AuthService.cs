@@ -3,8 +3,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using BLL.Constants;
+using static BLL.Constants.Constant;
 using BLL.IService;
 using DAL.IRepository;
 using Entity.DTOs;
@@ -44,7 +43,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, Constant.AUTH_USER_FAIL, email);
+            _logger.LogError(ex, AUTH_USER_CATCH, email);
             return null;
         }
     }
@@ -73,7 +72,7 @@ public class AuthService : IAuthService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, Constant.TOKEN_CREATE_FAIL, user.UserId);
+            _logger.LogError(e, TOKEN_CREATE_CATCH, user.UserId);
             return null;
         }
     }
@@ -83,7 +82,7 @@ public class AuthService : IAuthService
         try
         {
             string resetCode = Guid.NewGuid().ToString();
-            string verifyUrl = "auth/reset-password/" + resetCode;
+            string verifyUrl = RESET_PASS_PATH + resetCode;
             string link = $"http://localhost:5173/{verifyUrl}";
             userFound.ResetPasswordCode = resetCode;
             if (firstLogin == true)
@@ -96,7 +95,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, Constant.EMAIL_LINK_FAIL);
+            _logger.LogError(ex, EMAIL_LINK_CATCH);
             return null;
         }
     }
@@ -119,12 +118,12 @@ public class AuthService : IAuthService
             smtp.Credentials = NetworkCred;
             smtp.Port = 587;
             smtp.Send(mm);
-            return Response.Success(Constant.EMAIL_SUCCESS, HttpStatusCode.OK);
+            return Response.Success(EMAIL_SUCCESS, HttpStatusCode.OK);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, Constant.EMAIL_CATCH_FAIL, subject);
-            return Response.Failed(Constant.EMAIL_FAIL);
+            _logger.LogError(ex, EMAIL_SEND_CATCH, subject);
+            return Response.Failed(EMAIL_FAIL);
         }
     }
 
@@ -134,7 +133,7 @@ public class AuthService : IAuthService
         {
             User? user = await _userRepository.GetAsync(x => x.ResetPasswordCode == id && !x.IsDeleted);
             if (user == null)
-                return new Response(false, Constant.INVALID_RESET_LINK);
+                return new Response(false, INVALID_RESET_LINK);
             else
             {
                 if (!user.FirstLogin && (user.ResetPasswordCodeExpiryTime == null || DateTime.Now > user.ResetPasswordCodeExpiryTime))
@@ -142,15 +141,15 @@ public class AuthService : IAuthService
                     user.ResetPasswordCode = null;
                     user.ResetPasswordCodeExpiryTime = null;
                     _userRepository.Update(user);
-                    return new Response(false, Constant.EXPIRED_RESET_LINK);
+                    return new Response(false, EXPIRED_RESET_LINK);
                 }
                 return new Response(true);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking reset link for ID: {Id}", id);
-            return new Response(false, "An error occurred while checking the reset link.");
+            _logger.LogError(ex, CHECK_RESET_LINK_CATCH, id);
+            return new Response(false, CHECK_RESET_LINK_CATCH,id);
         }
     }
 
@@ -162,7 +161,7 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error finding user by reset code: {ResetCode}", resetCode);
+            _logger.LogError(ex, USER_BY_RESET_CODE_CATCH, resetCode);
             return null;
         }
     }

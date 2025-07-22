@@ -1,8 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using AutoMapper;
-using BLL.Constants;
-using BLL.Helpers;
+using static BLL.Constants.Constant;
 using BLL.IService;
 using DAL.IRepository;
 using Entity.DTOs;
@@ -42,7 +41,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving all users");
+            _logger.LogError(ex, GET_ALL_USERS_CATCH);
             return Response.Failed();
         }
     }
@@ -64,7 +63,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating password for user {UserId}", user.UserId);
+            _logger.LogError(ex, UPDATE_PASSWORD_CATCH, user.UserId);
             return null;
         }
     }
@@ -77,7 +76,7 @@ public class UserService : IUserService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, Constant.USER_BY_EMAIL_FAIL, email);
+            _logger.LogError(e, USER_BY_EMAIL_CATCH, email);
             return null;
         }
     }
@@ -91,7 +90,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving all roles");
+            _logger.LogError(ex, GET_ALL_ROLES_CATCH);
             return Response.Failed();
         }
     }
@@ -105,7 +104,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving user with ID {UserId}", id);
+            _logger.LogError(ex, GET_USER_CATCH, id);
             return Response.Failed();
         }
     }
@@ -118,9 +117,9 @@ public class UserService : IUserService
             User? userWithEmail = await FindUserByEmailAsync(model.Email);
             User? user = (model.UserId == 0) ? new User() : await _userRepository.GetAsync(u => u.UserId == model.UserId && !u.IsDeleted);
             if (userWithEmail != null && (model.UserId == 0 || (model.UserId != 0 && userWithEmail.UserId != model.UserId)))
-                return Response.Failed("Email already exists", HttpStatusCode.BadRequest);
+                return Response.Failed(USER_EXISTS, HttpStatusCode.BadRequest);
             if (model.UserId != 0 && user == null)
-                return Response.Failed("User not found", HttpStatusCode.NotFound);
+                return Response.Failed(USER_NOT_FOUND, HttpStatusCode.NotFound);
             user = model.UserId == 0 ? _mapper.Map<User>(model) : _mapper.Map(model, user);
             user!.UpdatedBy = upsertedBy;
             if (model.UserId == 0)
@@ -136,12 +135,12 @@ public class UserService : IUserService
             }
             await _userRepository.SaveAsync();
             if (model.UserId == 0)
-                return Response.Success("User added successfully", HttpStatusCode.Created, user);
-            return Response.Success("User updated successfully.", HttpStatusCode.OK);
+                return Response.Success(USER_ADDED, HttpStatusCode.Created, user);
+            return Response.Success(USER_UPDATED, HttpStatusCode.OK);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving user with email {Email}", model.Email);
+            _logger.LogError(ex, SAVE_USER_CATCH, model.Email);
             return Response.Failed();
         }
     }
@@ -153,20 +152,20 @@ public class UserService : IUserService
             User? user = await _userRepository.GetAsync(x => x.UserId == id && !x.IsDeleted);
             if (user == null)
             {
-                return Response.Failed("User not found", HttpStatusCode.NotFound);
+                return Response.Failed(USER_NOT_FOUND, HttpStatusCode.NotFound);
             }
             if (await _userRepository.GetAsync(x => x.ManagerId == user.UserId && !x.IsDeleted) != null)
             {
-                return Response.Failed("Cannot delete user who is a manager of other users", HttpStatusCode.BadRequest);
+                return Response.Failed(ASSOCIATED_MANAGER, HttpStatusCode.BadRequest);
             }
             user.IsDeleted = true;
             _userRepository.Update(user);
             await _userRepository.SaveAsync();
-            return Response.Success("User deleted successfully", HttpStatusCode.OK);
+            return Response.Success(USER_DELETED, HttpStatusCode.OK);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting user with ID {UserId}", id);
+            _logger.LogError(ex, DELETE_USER_CATCH, id);
             return Response.Failed();
         }
     }

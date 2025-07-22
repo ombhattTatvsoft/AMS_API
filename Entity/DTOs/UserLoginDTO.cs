@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Entity.ViewModels;
+namespace Entity.DTOs;
 
 public class UserLoginDTO
 {

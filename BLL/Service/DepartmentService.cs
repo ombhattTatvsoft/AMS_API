@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using AutoMapper;
+using static BLL.Constants.Constant;
 using BLL.IService;
 using DAL.IRepository;
 using Entity.DTOs;
@@ -40,7 +41,7 @@ public class DepartmentService : IDepartmentService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while getting all departments.");
+            _logger.LogError(ex, GET_ALL_DEPT_CATCH);
             return Response.Failed();
         }
     }
@@ -54,7 +55,7 @@ public class DepartmentService : IDepartmentService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while getting department with ID {Id}.", id);
+            _logger.LogError(ex, GET_DEPT_CATCH, id);
             return Response.Failed();
         }
     }
@@ -67,7 +68,7 @@ public class DepartmentService : IDepartmentService
             if (model.DepartmentId == 0)
             {
                 if (departmentWithSameName != null)
-                    return Response.Failed("Department with same name exists",HttpStatusCode.BadRequest);
+                    return Response.Failed(DEPT_EXISTS,HttpStatusCode.BadRequest);
                 Department department = _mapper.Map<Department>(model);
                 department.CreatedBy = UpsertedBy;
                 department.UpdatedBy = UpsertedBy;
@@ -78,10 +79,10 @@ public class DepartmentService : IDepartmentService
                 Department? existingDepartment = await _repository.GetAsync(x => x.DepartmentId == model.DepartmentId && !x.IsDeleted);
                 if (existingDepartment == null)
                 {
-                    return Response.Failed("Department not found.", HttpStatusCode.NotFound);
+                    return Response.Failed(DEPT_NOT_FOUND, HttpStatusCode.NotFound);
                 }
                 if(departmentWithSameName!=null && departmentWithSameName.DepartmentId!=existingDepartment.DepartmentId)
-                    return Response.Failed("Department with same name exists",HttpStatusCode.BadRequest);
+                    return Response.Failed(DEPT_EXISTS,HttpStatusCode.BadRequest);
                 Department department = _mapper.Map(model, existingDepartment);
                 department.UpdatedAt = DateTime.Now;
                 department.UpdatedBy = UpsertedBy;
@@ -89,12 +90,12 @@ public class DepartmentService : IDepartmentService
             }
             await _repository.SaveAsync();
             if (model.DepartmentId == 0)
-                return Response.Success("Department created successfully",HttpStatusCode.Created);
-            return Response.Success("Department updated successfully.", HttpStatusCode.OK);
+                return Response.Success(DEPT_ADDED,HttpStatusCode.Created);
+            return Response.Success(DEPT_UPDATED, HttpStatusCode.OK);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while saving department.");
+            _logger.LogError(ex, SAVE_DEPT_CATCH);
             return Response.Failed();
         }
     }
@@ -106,20 +107,20 @@ public class DepartmentService : IDepartmentService
             Department? department = await _repository.GetAsync(x => x.DepartmentId == id && !x.IsDeleted, x => x.Users);
             if (department == null)
             {
-                return Response.Failed("Department not found.", HttpStatusCode.NotFound);
+                return Response.Failed(DEPT_NOT_FOUND, HttpStatusCode.NotFound);
             }
             if (department.Users.Any())
             {
-                return Response.Failed("Cannot delete department with associated users",HttpStatusCode.BadRequest);
+                return Response.Failed(DEPT_WITH_USERS,HttpStatusCode.BadRequest);
             }
             department.IsDeleted = true;
             _repository.Update(department);
             await _repository.SaveAsync();
-            return Response.Success("Department deleted successfully",HttpStatusCode.OK);
+            return Response.Success(DEPT_DELETED,HttpStatusCode.OK);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting department with ID {DepartmentId}", id);
+            _logger.LogError(ex, DELETE_DEPT_CATCH, id);
             return Response.Failed();
         }
     }

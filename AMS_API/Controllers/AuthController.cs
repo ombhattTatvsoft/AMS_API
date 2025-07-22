@@ -4,7 +4,6 @@ using BLL.Helpers;
 using BLL.IService;
 using Entity.DTOs;
 using Entity.Models;
-using Entity.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AMS_API.Controllers
@@ -105,7 +104,7 @@ namespace AMS_API.Controllers
             if (userFound != null)
             {
                 await _userService.UpdatePasswordAsync(userFound, user.NewPassword);
-                response.Message = "Reset Password Successful";
+                response.Message = Constant.RESET_PASSWORD_SUCCESS;
                 response.StatusCode = HttpStatusCode.OK;
                 return Ok(response);
             }

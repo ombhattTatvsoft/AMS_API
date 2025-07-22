@@ -1,3 +1,4 @@
+using BLL.Constants;
 using BLL.Helpers;
 using BLL.IService;
 using Entity.DTOs;
@@ -9,33 +10,31 @@ namespace AMS_API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+// [Authorize(Roles = "Admin")]
 
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
     private readonly IAuthService _authService;
-    private readonly ActionMapper actionMapper;
 
     public UserController(IUserService service, IAuthService authService)
     {
         _service = service;
         _authService = authService;
-        actionMapper = new ActionMapper();
     }
 
     [HttpGet("get-users")]
     public async Task<IActionResult> GetUsers()
     {
         Response response = await _service.GetAllUsersAsync();
-        return actionMapper.MapToActionResult(response);
+        return this.MapToActionResult(response);
     }
 
     [HttpGet("get-user/{id}")]
     public async Task<IActionResult> GetUserById(int id)
     {
         Response response = await _service.GetUserAsync(id);
-        return actionMapper.MapToActionResult(response);
+        return this.MapToActionResult(response);
     }
 
     [HttpPost("save-user")]
@@ -54,26 +53,26 @@ public class UserController : ControllerBase
             Response emailResponse = _authService.SendEmail(model.Email, body, subject);
             if (!emailResponse.IsSuccess)
             {
-                emailResponse.Message = "User created but email sending failed.";
-                return actionMapper.MapToActionResult(emailResponse);
+                emailResponse.Message = Constant.SAVE_USER_EMAIL_FAIL;
+                return this.MapToActionResult(emailResponse);
             }
             else
-                response.Message = "User created successfully and email sent.";
+                response.Message = Constant.SAVE_USER_SUCCESS;
         }
-        return actionMapper.MapToActionResult(response);
+        return this.MapToActionResult(response);
     }
 
     [HttpDelete("delete-user/{id}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
         Response response = await _service.DeleteUserAsync(id);
-        return actionMapper.MapToActionResult(response);
+        return this.MapToActionResult(response);
     }
 
     [HttpGet("get-roles")]
     public async Task<IActionResult> GetRoles()
     {
         Response response = await _service.GetAllRolesAsync();
-        return actionMapper.MapToActionResult(response);
+        return this.MapToActionResult(response);
     }
 }
