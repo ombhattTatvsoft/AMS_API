@@ -136,6 +136,8 @@ public class UserService : IUserService
             await _userRepository.SaveAsync();
             if (model.UserId == 0)
                 return Response.Success(USER_ADDED, HttpStatusCode.Created, user);
+            if(upsertedBy == user.UserId)
+                return Response.Success(PROFILE_UPDATED, HttpStatusCode.OK);
             return Response.Success(USER_UPDATED, HttpStatusCode.OK);
         }
         catch (Exception ex)

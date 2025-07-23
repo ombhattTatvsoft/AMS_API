@@ -1,4 +1,5 @@
 using System.Net;
+using AutoMapper;
 using BLL.Constants;
 using BLL.Helpers;
 using BLL.IService;
@@ -16,10 +17,13 @@ namespace AMS_API.Controllers
 
         private readonly IUserService _userService;
 
-        public AuthController(IAuthService service, IUserService userService)
+        private readonly IMapper _mapper;
+
+        public AuthController(IAuthService service, IUserService userService, IMapper mapper)
         {
             _service = service;
             _userService = userService;
+            _mapper = mapper;
         }
 
         [HttpPost("login")]
@@ -45,13 +49,7 @@ namespace AMS_API.Controllers
             response.Data = new
             {
                 token,
-                user = new
-                {
-                    id = userFound.UserId,
-                    name = userFound.Name,
-                    role = userFound.Role.RoleName,
-                    email = userFound.Email
-                }
+                user = _mapper.Map<UserDTO>(userFound)
             };
             response.StatusCode = HttpStatusCode.OK;
             return Ok(response);
