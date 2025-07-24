@@ -22,7 +22,7 @@ public class MappingProfile : Profile
         CreateMap<Department, DepartmentDTO>()
         .ForMember(dest => dest.UserCount, opt => opt.MapFrom(src => src.Users.Count));
 
-        // CreateMap<HolidayVM, Holiday>().ReverseMap();
+        CreateMap<HolidayDTO, Holiday>().ReverseMap();
         // CreateMap<UserAttendanceVM, Attendance>().ReverseMap();
         CreateMap<UpsertDepartmentDTO, Department>().ReverseMap();
         CreateMap<RoleDTO, Role>().ReverseMap();

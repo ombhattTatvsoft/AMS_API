@@ -41,6 +41,11 @@ namespace BLL.Constants
         public const string PASSWORD_CHANGE_SUCCESS = "Password Changed Successfully";
         public const string PASSWORD_CHANGE_FAIL = "Password Change Failed, Please Check your Current Password";
 
+        // Holiday
+        public const string HOLIDAY_NOT_FOUND = "Holiday Not Found";
+        public const string HOLIDAY_ADDED = "Holiday added successfully";
+        public const string HOLIDAY_UPDATED = "Holiday updated successfully";
+
         // Catch Exception fields
 
         // Auth
@@ -65,6 +70,12 @@ namespace BLL.Constants
         public const string GET_USER_CATCH = "Error occurred while getting user with ID {Id}";
         public const string SAVE_USER_CATCH = "Error saving user with email {Email}";
         public const string DELETE_USER_CATCH = "Error deleting user with ID {UserId}";
+
+        // Holiday
+        public const string GET_ALL_HOLIDAY_CATCH = "Error occurred while getting all holidays";
+        // public const string GET_DEPT_CATCH = "Error occurred while getting department with ID {Id}";
+        public const string SAVE_HOLIDAY_CATCH = "Error occurred while saving Holiday";
+        // public const string DELETE_DEPT_CATCH = "Error deleting department with ID {DepartmentId}";
 
     }
 }
